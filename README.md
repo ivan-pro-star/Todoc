@@ -3,4 +3,4 @@ Modification de l'application Todoc (OpenClassroom): ajout d'une persistance de 
 # Run
 Executer la class "MainActivity" pour lancer l'application.
 # Test
-la liste des tâches doit être vides avant de lancer les tests.
+La liste des tâches doit être vides avant de lancer les tests.
