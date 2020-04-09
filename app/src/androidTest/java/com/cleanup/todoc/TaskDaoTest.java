@@ -1,0 +1,159 @@
+package com.cleanup.todoc;
+
+import android.arch.core.executor.testing.InstantTaskExecutorRule;
+import android.arch.persistence.room.Room;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+
+import com.cleanup.todoc.databse.ProjectDao;
+import com.cleanup.todoc.databse.TaskDao;
+import com.cleanup.todoc.databse.TodocDataBase;
+import com.cleanup.todoc.model.Project;
+import com.cleanup.todoc.model.Task;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * !!!--IMPORTANT table_task SHOULD BE EMPTY IN DATABASE FOR TEST--!!!
+ * */
+@RunWith(AndroidJUnit4.class)
+public class TaskDaoTest {
+
+    private TodocDataBase database;
+
+    @Rule
+    public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
+
+    @Before
+    public void initDb() throws Exception{
+        this.database = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getContext(),
+                TodocDataBase.class).
+                allowMainThreadQueries().
+                build();
+    }
+
+    @After
+    public void closeDb(){
+        database.close();
+    }
+
+    @Test
+    public void insert_delete_task() throws InterruptedException {
+        final Task task1 = new Task( 1, "aaa", 123);
+        TaskDao taskDao = this.database.taskDao();
+
+        List<Task> tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        assertTrue(tasks.size() == 0);
+
+        taskDao.insert(task1);
+        tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        assertTrue(tasks.size() == 1);
+        isEqual(tasks.get(0),task1);
+
+        Task taskToDelete = tasks.get(0);
+        taskDao.delete(taskToDelete);
+        tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        assertTrue(tasks.size() == 0);
+    }
+    /** Les tests ci dessous sont déjà réalisés dans les tests unitaires avec des ArrayList.
+     *  Toutefois je les aie rajoutés avec les DAO.
+     *
+     * */
+    @Test
+    public void test_az_comparator() throws InterruptedException {
+        final Task task1 = new Task( 1, "aaa", 123);
+        final Task task2 = new Task( 2, "zzz", 124);
+        final Task task3 = new Task( 3, "hhh", 125);
+
+        TaskDao taskDao = this.database.taskDao();
+
+        taskDao.insert(task1);
+        taskDao.insert(task2);
+        taskDao.insert(task3);
+        List<Task> tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        Collections.sort(tasks, new Task.TaskAZComparator());
+
+        assertEquals(tasks.get(0).getName(), task1.getName());
+        isEqual(tasks.get(0),task1);
+
+        isEqual(tasks.get(0), task1);
+        isEqual(tasks.get(1), task3);
+        isEqual(tasks.get(2), task2);
+    }
+
+    @Test
+    public void test_za_comparator() throws InterruptedException {
+        final Task task1 = new Task( 1, "aaa", 123);
+        final Task task2 = new Task( 2, "zzz", 124);
+        final Task task3 = new Task( 3, "hhh", 125);
+
+        TaskDao taskDao = this.database.taskDao();
+
+        taskDao.insert(task1);
+        taskDao.insert(task2);
+        taskDao.insert(task3);
+        List<Task> tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        Collections.sort(tasks, new Task.TaskZAComparator());
+
+        isEqual(tasks.get(0), task2);
+        isEqual(tasks.get(1), task3);
+        isEqual(tasks.get(2), task1);
+    }
+
+    @Test
+    public void test_recent_comparator() throws InterruptedException {
+        final Task task1 = new Task( 1, "aaa", 123);
+        final Task task2 = new Task( 2, "zzz", 124);
+        final Task task3 = new Task( 3, "hhh", 125);
+
+        TaskDao taskDao = this.database.taskDao();
+
+        taskDao.insert(task1);
+        taskDao.insert(task2);
+        taskDao.insert(task3);
+        List<Task> tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        Collections.sort(tasks, new Task.TaskRecentComparator());
+
+        isEqual(tasks.get(0), task3);
+        isEqual(tasks.get(1), task2);
+        isEqual(tasks.get(2), task1);
+    }
+
+    @Test
+    public void test_old_comparator() throws InterruptedException {
+        final Task task1 = new Task( 1, "aaa", 123);
+        final Task task2 = new Task( 2, "zzz", 124);
+        final Task task3 = new Task( 3, "hhh", 125);
+
+        TaskDao taskDao = this.database.taskDao();
+
+        taskDao.insert(task1);
+        taskDao.insert(task2);
+        taskDao.insert(task3);
+        List<Task> tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
+        Collections.sort(tasks, new Task.TaskOldComparator());
+
+        isEqual(tasks.get(0), task1);
+        isEqual(tasks.get(1), task2);
+        isEqual(tasks.get(2), task3);
+    }
+
+    //  UTILS
+    private boolean isEqual(Task task, Task task1) {
+        // id is generated by BDD: no test because.
+        assertEquals(task.getName(), task1.getName());
+        assertEquals(task.getCreationTimestamp(), task1.getCreationTimestamp());
+        assertEquals(task.getProjectId(), task1.getProjectId());
+        return true;
+    }
+}
