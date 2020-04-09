@@ -5,10 +5,8 @@ import android.arch.persistence.room.Room;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.cleanup.todoc.databse.ProjectDao;
 import com.cleanup.todoc.databse.TaskDao;
 import com.cleanup.todoc.databse.TodocDataBase;
-import com.cleanup.todoc.model.Project;
 import com.cleanup.todoc.model.Task;
 
 import org.junit.After;
@@ -35,7 +33,7 @@ public class TaskDaoTest {
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
     @Before
-    public void initDb() throws Exception{
+    public void initDb(){
         this.database = Room.inMemoryDatabaseBuilder(InstrumentationRegistry.getContext(),
                 TodocDataBase.class).
                 allowMainThreadQueries().
@@ -53,17 +51,17 @@ public class TaskDaoTest {
         TaskDao taskDao = this.database.taskDao();
 
         List<Task> tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
-        assertTrue(tasks.size() == 0);
+        assertEquals(0, tasks.size());
 
         taskDao.insert(task1);
         tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
-        assertTrue(tasks.size() == 1);
+        assertEquals(1, tasks.size());
         isEqual(tasks.get(0),task1);
 
         Task taskToDelete = tasks.get(0);
         taskDao.delete(taskToDelete);
         tasks = LiveDataTestUtil.getValue(taskDao.getAllTasks());
-        assertTrue(tasks.size() == 0);
+        assertEquals(0, tasks.size());
     }
     /** Les tests ci dessous sont déjà réalisés dans les tests unitaires avec des ArrayList.
      *  Toutefois je les aie rajoutés avec les DAO.
